@@ -486,6 +486,7 @@ int main() {
 		for (int id = 0; id < total_car; id++)
 		{
 			switch (ch[id]) {
+				printf("%c", ch[id]);
 			case 'n': {
 				Cars_id[i++] = id;
 				push(car_North, id);
