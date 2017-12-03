@@ -13,7 +13,7 @@ typedef struct queue {
 	int length;
 } queue;
 queue q;
-void push(queue q,int x)
+void push(queue q, int x)
 {
 	q.key[q.tail] = x;
 	if (q.tail == q.length) {
@@ -43,12 +43,12 @@ int count(queue q)
 
 
 void * check_deadlock(void*arg);
-void active_Car() ;
+void active_Car();
 void * car_NorthtoSouth(void *arg);
 void * car_SouthtoNorth(void *arg);
 void * car_EasttoWest(void *arg);
 void * car_WesttoEast(void *arg);
-	
+
 pthread_cond_t deadlock;
 pthread_cond_t deadlock_solve;
 pthread_cond_t firstWest;
@@ -84,14 +84,14 @@ int current_North_id;
 int current_South_id;
 int current_East_id;
 int current_West_id;
-int total_car=0;
+int total_car = 0;
 int West_for_resource1;
 int East_for_resource1;
 int North_for_resource1;
 int South_for_resource1;
 
 
-int resource=4;
+int resource = 4;
 int car_has_dealed = 0;
 
 void* check_deadlock(void*arg) {
@@ -158,7 +158,7 @@ void * car_NorthtoSouth(void *arg)
 	pthread_mutex_unlock(&wait_North);
 	pthread_mutex_lock(&mutex_dir);
 	dir = North;
-        North_for_resource1 = 1;
+	North_for_resource1 = 1;
 	remain = --resource;
 	int tmp = 0;
 	for (int i = 0; i < total_car; i++)
@@ -170,7 +170,7 @@ void * car_NorthtoSouth(void *arg)
 	printf("car %d from N arrives\n", current_North_id);
 	for (int i = 0; i < total_car; i++)
 	{
-		while(number[i]!=0&&number[current_North_id]>number[i])
+		while (number[i] != 0 && number[current_North_id] > number[i]);
 	}
 	usleep(1000);
 	pthread_mutex_lock(&mutex_dir);
@@ -197,7 +197,7 @@ void * car_NorthtoSouth(void *arg)
 			else pthread_cond_signal(&GoEast);
 			North_for_resource1 = 1;
 			pthread_mutex_unlock(&mutex_dir);
-			return NULL；
+			return NULL;
 		}
 		else {
 			North_for_resource1 = 0;
@@ -235,7 +235,7 @@ void * car_SouthtoNorth(void *arg)
 	pthread_mutex_unlock(&wait_South);
 	pthread_mutex_lock(&mutex_dir);
 	dir = South;
-	South_for_resource1 = 1；
+	South_for_resource1 = 1;
 		remain = --resource;
 	int tmp = 0;
 	for (int i = 0; i < total_car; i++)
@@ -247,7 +247,7 @@ void * car_SouthtoNorth(void *arg)
 	printf("car %d from S arrives\n", current_South_id);
 	for (int i = 0; i < total_car; i++)
 	{
-		while (number[i] != 0 && number[current_South_id]>number[i])
+		while (number[i] != 0 && number[current_South_id] > number[i]);
 	}
 	usleep(1000);
 	pthread_mutex_lock(&mutex_dir);
@@ -274,7 +274,7 @@ void * car_SouthtoNorth(void *arg)
 			else pthread_cond_signal(&GoWest);
 			South_for_resource1 = 1;
 			pthread_mutex_unlock(&mutex_dir);
-			return NULL；
+			return NULL;
 		}
 		else {
 			South_for_resource1 = 0;
@@ -312,7 +312,7 @@ void * car_EasttoWest(void *arg)
 	pthread_mutex_unlock(&wait_East);
 	pthread_mutex_lock(&mutex_dir);
 	dir = East;
-	East_for_resource1 = 1；
+	East_for_resource1 = 1;
 		remain = --resource;
 	int tmp = 0;
 	for (int i = 0; i < total_car; i++)
@@ -324,7 +324,7 @@ void * car_EasttoWest(void *arg)
 	printf("car %d from E arrives\n", current_East_id);
 	for (int i = 0; i < total_car; i++)
 	{
-		while (number[i] != 0 && number[current_East_id]>number[i])
+		while (number[i] != 0 && number[current_East_id] > number[i]);
 	}
 	usleep(1000);
 	pthread_mutex_lock(&mutex_dir);
@@ -352,7 +352,7 @@ void * car_EasttoWest(void *arg)
 			else pthread_cond_signal(&GoSouth);
 			East_for_resource1 = 1;
 			pthread_mutex_unlock(&mutex_dir);
-			return NULL；
+			return NULL;
 		}
 		else {
 			East_for_resource1 = 0;
@@ -390,7 +390,7 @@ void * car_WesttoEast(void*arg)
 	pthread_mutex_unlock(&wait_West);
 	pthread_mutex_lock(&mutex_dir);
 	dir = West;
-	West_for_resource1 = 1；
+	West_for_resource1 = 1;
 		remain = --resource;
 	int tmp = 0;
 	for (int i = 0; i < total_car; i++)
@@ -402,7 +402,7 @@ void * car_WesttoEast(void*arg)
 	printf("car %d from W arrives\n", current_West_id);
 	for (int i = 0; i < total_car; i++)
 	{
-		while (number[i] != 0 && number[current_West_id]>number[i])
+		while (number[i] != 0 && number[current_West_id] > number[i]);
 	}
 	usleep(1000);
 	pthread_mutex_lock(&mutex_dir);
@@ -430,7 +430,7 @@ void * car_WesttoEast(void*arg)
 			else pthread_cond_signal(&GoNorth);
 			West_for_resource1 = 1;
 			pthread_mutex_unlock(&mutex_dir);
-			return NULL；
+			return NULL;
 		}
 		else {
 			West_for_resource1 = 0;
@@ -481,26 +481,26 @@ int main() {
 	char ch[MAX];
 	scanf("%s", ch);
 	total_car = strlen(ch);
-	printf("total: %d\n",total_car)；
-	int i =0；
+	printf("total: %d\n", total_car);
+		int i = 0;
 		for (int id = 0; id < total_car; id++)
 		{
 			switch (ch[id]) {
 			case 'n': {
 				Cars_id[i++] = id;
-				push(car_North,id);
+				push(car_North, id);
 				pthread_create(&thread_pool[id], NULL, car_NorthtoSouth, NULL);
 				break;
 			}
 			case 's': {
 				Cars_id[i++] = id;
-				push(car_South,id);
+				push(car_South, id);
 				pthread_create(&thread_pool[id], NULL, car_SouthtoNorth, NULL);
 				break;
 			}
 			case 'e': {
 				Cars_id[i++] = id;
-				push(car_East,id);
+				push(car_East, id);
 				pthread_create(&thread_pool[id], NULL, car_EasttoWest, NULL);
 				break;
 			}
@@ -513,24 +513,24 @@ int main() {
 			default: break;
 			}
 		}
-	    pthread_create(&check, NULL, check_deadlock, NULL);
-		for (int i = 0; i < total_car; i++)
-		{
-			pthread_join(thread_pool[i], NULL);
-		}
-		pthread_cond_destroy(&deadlock);
-		pthread_cond_destroy(&deadlock_solve);
-		pthread_cond_destroy(&firstWest);
-		pthread_cond_destroy(&firstEast);
-		pthread_cond_destroy(&firstNorth);
-		pthread_cond_destroy(&firstSouth);
-		pthread_cond_destroy(&GoWest);
-		pthread_cond_destroy(&GoEast);
-		pthread_cond_destroy(&GoNorth);
-		pthread_cond_destroy(&GoSouth);
-		pthread_mutex_destroy(&wait_West);
-		pthread_mutex_destroy(&wait_East);
-		pthread_mutex_destroy(&wait_North);
-		pthread_mutex_destroy(&wait_South);
-		pthread_mutex_destroy(&mutex_car);
+	pthread_create(&check, NULL, check_deadlock, NULL);
+	for (int i = 0; i < total_car; i++)
+	{
+		pthread_join(thread_pool[i], NULL);
+	}
+	pthread_cond_destroy(&deadlock);
+	pthread_cond_destroy(&deadlock_solve);
+	pthread_cond_destroy(&firstWest);
+	pthread_cond_destroy(&firstEast);
+	pthread_cond_destroy(&firstNorth);
+	pthread_cond_destroy(&firstSouth);
+	pthread_cond_destroy(&GoWest);
+	pthread_cond_destroy(&GoEast);
+	pthread_cond_destroy(&GoNorth);
+	pthread_cond_destroy(&GoSouth);
+	pthread_mutex_destroy(&wait_West);
+	pthread_mutex_destroy(&wait_East);
+	pthread_mutex_destroy(&wait_North);
+	pthread_mutex_destroy(&wait_South);
+	pthread_mutex_destroy(&mutex_car);
 }
