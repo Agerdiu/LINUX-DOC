@@ -5,7 +5,7 @@
 #include <pthread.h>
 #include <semaphore.h>
 #include <stdbool.h>
-#define MAX 1000
+#define MAX 100
 typedef struct queue {
 	int head;
 	int tail;
@@ -42,6 +42,8 @@ int count(queue q)
 }
 
 
+int number[MAX];
+
 void * check_deadlock(void*arg);
 void active_Car();
 void * car_NorthtoSouth(void *arg);
@@ -68,6 +70,7 @@ pthread_mutex_t mutex_car;
 pthread_mutex_t mutex_dir;
 pthread_mutex_t mutex_deadlock;
 pthread_t thread_pool[MAX];
+pthread_t check;
 
 bool is_deadlock = false;
 typedef enum { West, North, South, East } diru;
@@ -84,7 +87,7 @@ int current_North_id;
 int current_South_id;
 int current_East_id;
 int current_West_id;
-int total_car = 0;
+int total_car=0;
 int West_for_resource1;
 int East_for_resource1;
 int North_for_resource1;
@@ -477,45 +480,45 @@ int main() {
 	pthread_mutex_init(&wait_North, NULL);
 	pthread_mutex_init(&wait_South, NULL);
 	pthread_mutex_init(&mutex_car, NULL);
-	int total_car = 0;
 	char ch[MAX];
 	scanf("%s", ch);
 	total_car = strlen(ch);
 	printf("total: %d\n", total_car);
-		int i = 0;
-		for (int id = 0; id < total_car; id++)
-		{
-			switch (ch[id]) {
-				printf("%c", ch[id]);
-			case 'n': {
+	int i = 0;
+        int id;
+        for(id = 0; id < strlen(ch); id++)
+	{
+           switch (ch[id]) {
+			case ('n'): {
+                                printf("n");
 				Cars_id[i++] = id;
 				push(car_North, id);
 				pthread_create(&thread_pool[id], NULL, car_NorthtoSouth, NULL);
 				break;
-			}
-			case 's': {
+			};
+			case ('s'): {
 				Cars_id[i++] = id;
 				push(car_South, id);
 				pthread_create(&thread_pool[id], NULL, car_SouthtoNorth, NULL);
 				break;
-			}
-			case 'e': {
+			};
+			case ('e'): {
 				Cars_id[i++] = id;
 				push(car_East, id);
 				pthread_create(&thread_pool[id], NULL, car_EasttoWest, NULL);
 				break;
-			}
-			case 'w': {
+			};
+			case ('w'): {
+                                printf("w");
 				Cars_id[i++] = id;
 				push(car_West, id);
 				pthread_create(&thread_pool[id], NULL, car_WesttoEast, NULL);
 				break;
-			}
-			default: break;
+			};
 			}
 		}
 	pthread_create(&check, NULL, check_deadlock, NULL);
-	for (int i = 0; i < total_car; i++)
+	for (i = 0; i < strlen(ch); i++)
 	{
 		pthread_join(thread_pool[i], NULL);
 	}
