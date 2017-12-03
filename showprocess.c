@@ -9,7 +9,7 @@ int traversal(void){
     int num_stopped = 0; //stopped processes
     int num_traced = 0; //traced processes
     int num_dead = 0; //dead processes
-    int unknown = 0; unknown
+    int unknown = 0; //unknown
     int num_total = 0; //total number of processes
     int t_exit_state; //temp var to store task_struct.exit_state
     int t_state; //temp var to store task_struct.state
@@ -22,7 +22,7 @@ int traversal(void){
         t_exit_state = p->exit_state;
         if(t_exit_state!=0){ //process exited
             switch(t_exit_state){
-				case EXIT_ZOMBIE;
+				case EXIT_ZOMBIE:
                     num_zombie++;
                     break;
                 case EXIT_DEAD:
