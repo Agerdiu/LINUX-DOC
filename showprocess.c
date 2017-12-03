@@ -18,7 +18,7 @@ int traversal(void){
     for(p=&init_task; (p=next_task(p))!=&init_task;){ //traversal
         printk("[PT] Name:%s ; Pid:%d State:%ld ; ParName:%s ;\n",p->comm,p->pid,p->state,p->real_parent->comm);
         taskstate = p->state; //put p->state to variable t_state
-        exit = p->exitstate;
+        exit = p->exit_state;
         if(exit !=0){ //process exited
             switch(exit){
 			case EXIT_ZOMBIE:
@@ -37,7 +37,7 @@ int traversal(void){
                     break;
                 case TASK_INTERRUPTIBLE:
                     interruptible++;
-                    break;interruptible
+                    break;
                 case TASK_UNINTERRUPTIBLE:
                     uninterruptible++;
                     break;
