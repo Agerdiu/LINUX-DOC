@@ -42,12 +42,12 @@ int count(queue q)
 }
 
 
-void* check_deadlock(void*arg)
-void active_Car() 
-void * car_NorthtoSouth(void *arg)
-void * car_SouthtoNorth(void *arg)
-void * car_EasttoWest(void *arg)
-void * car_WesttoEast(void *arg)
+void * check_deadlock(void*arg);
+void active_Car() ;
+void * car_NorthtoSouth(void *arg);
+void * car_SouthtoNorth(void *arg);
+void * car_EasttoWest(void *arg);
+void * car_WesttoEast(void *arg);
 	
 pthread_cond_t deadlock;
 pthread_cond_t deadlock_solve;
@@ -70,7 +70,9 @@ pthread_mutex_t mutex_deadlock;
 pthread_t thread_pool[MAX];
 
 bool is_deadlock = false;
-typedef enum { West, North, South, East } dir;
+typedef enum { West, North, South, East } diru;
+
+diru dir;
 
 int Cars_id[MAX];
 queue car_North;
@@ -156,7 +158,7 @@ void * car_NorthtoSouth(void *arg)
 	pthread_mutex_unlock(&wait_North);
 	pthread_mutex_lock(&mutex_dir);
 	dir = North;
-	North_for_resource1 = 1；
+        North_for_resource1 = 1;
 	remain = --resource;
 	int tmp = 0;
 	for (int i = 0; i < total_car; i++)
