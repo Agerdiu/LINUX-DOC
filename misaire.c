@@ -105,30 +105,30 @@ void* check_deadlock(void*arg) {
 		pthread_cond_wait(&deadlock, &mutex_deadlock);
 		printf("DEADLOCK： car jam,dir is %d", dir);
 		is_deadlock = true;
-	}
 	switch (dir) {
 	case North: {
 		printf("let east pass\n");
 		pthread_cond_signal(&GoEast);
 		break;
-	}
+	};
 	case South: {
 		printf("let west pass\n");
 		pthread_cond_signal(&GoWest);
 		break;
-	}
+	};
 	case East: {
 		printf("let south pass\n");
 		pthread_cond_signal(&GoSouth);
 		break;
-	}
+	};
 	case West: {
 		printf("let North pass\n");
 		pthread_cond_signal(&GoNorth);
 		break;
-	}
-	}
+	};
+	};
 	pthread_mutex_unlock(&mutex_deadlock);
+	}
 }
 void active_Car() {
 	is_deadlock = false;
@@ -190,6 +190,7 @@ void * car_NorthtoSouth(void *arg)
 		return NULL;
 	}
 	else if (West_for_resource1) {
+		pthread_cond_wait(&GoNorth,&mutex_dir);
 		if (is_deadlock) {
 			printf("car %d from N left\n", current_North_id);
 			car_has_dealed++;
@@ -198,7 +199,7 @@ void * car_NorthtoSouth(void *arg)
 				pthread_cond_signal(&deadlock_solve);
 			}
 			else pthread_cond_signal(&GoEast);
-			North_for_resource1 = 1;
+			North_for_resource1 = 0;
 			pthread_mutex_unlock(&mutex_dir);
 			return NULL;
 		}
@@ -267,6 +268,7 @@ void * car_SouthtoNorth(void *arg)
 		return NULL;
 	}
 	else if (East_for_resource1) {
+		pthread_cond_wait(&GoSouth,&mutex_dir);
 		if (is_deadlock) {
 			printf("car %d from S left\n", current_South_id);
 			car_has_dealed++;
@@ -275,7 +277,7 @@ void * car_SouthtoNorth(void *arg)
 				pthread_cond_signal(&deadlock_solve);
 			}
 			else pthread_cond_signal(&GoWest);
-			South_for_resource1 = 1;
+			South_for_resource1 = 0;
 			pthread_mutex_unlock(&mutex_dir);
 			return NULL;
 		}
@@ -345,6 +347,7 @@ void * car_EasttoWest(void *arg)
 	}
 	//
 	else if (North_for_resource1) {
+		pthread_cond_wait(&GoEast,&mutex_dir);
 		if (is_deadlock) {
 			printf("car %d from E left\n", current_East_id);
 			car_has_dealed++;
@@ -353,7 +356,7 @@ void * car_EasttoWest(void *arg)
 				pthread_cond_signal(&deadlock_solve);
 			}
 			else pthread_cond_signal(&GoSouth);
-			East_for_resource1 = 1;
+			East_for_resource1 = 0;
 			pthread_mutex_unlock(&mutex_dir);
 			return NULL;
 		}
@@ -423,6 +426,7 @@ void * car_WesttoEast(void*arg)
 	}
 	//
 	else if (South_for_resource1) {
+		pthread_cond_wait(&GoWest,&mutex_dir);
 		if (is_deadlock) {
 			printf("car %d from W left\n", current_West_id);
 			car_has_dealed++;
@@ -431,7 +435,7 @@ void * car_WesttoEast(void*arg)
 				pthread_cond_signal(&deadlock_solve);
 			}
 			else pthread_cond_signal(&GoNorth);
-			West_for_resource1 = 1;
+			West_for_resource1 = 0;
 			pthread_mutex_unlock(&mutex_dir);
 			return NULL;
 		}
@@ -485,30 +489,28 @@ int main() {
 	total_car = strlen(ch);
 	printf("total: %d\n", total_car);
 	int i = 0;
-        int id;
-        for(id = 0; id < strlen(ch); id++)
+        for(int id = 0; id < strlen(ch); id++)
 	{
            switch (ch[id]) {
-			case ('n'): {
-                                printf("n");
+			case 'n': {
 				Cars_id[i++] = id;
 				push(car_North, id);
 				pthread_create(&thread_pool[id], NULL, car_NorthtoSouth, NULL);
 				break;
 			};
-			case ('s'): {
+			case 's': {
 				Cars_id[i++] = id;
 				push(car_South, id);
 				pthread_create(&thread_pool[id], NULL, car_SouthtoNorth, NULL);
 				break;
 			};
-			case ('e'): {
+			case 'e': {
 				Cars_id[i++] = id;
 				push(car_East, id);
 				pthread_create(&thread_pool[id], NULL, car_EasttoWest, NULL);
 				break;
 			};
-			case ('w'): {
+			case 'w': {
                                 printf("w");
 				Cars_id[i++] = id;
 				push(car_West, id);
@@ -518,9 +520,9 @@ int main() {
 			}
 		}
 	pthread_create(&check, NULL, check_deadlock, NULL);
-	for (i = 0; i < strlen(ch); i++)
+	for (int id = 0; id < strlen(ch); id++)
 	{
-		pthread_join(thread_pool[i], NULL);
+		pthread_join(thread_pool[id], NULL);
 	}
 	pthread_cond_destroy(&deadlock);
 	pthread_cond_destroy(&deadlock_solve);
@@ -537,4 +539,5 @@ int main() {
 	pthread_mutex_destroy(&wait_North);
 	pthread_mutex_destroy(&wait_South);
 	pthread_mutex_destroy(&mutex_car);
+	return 0;
 }
