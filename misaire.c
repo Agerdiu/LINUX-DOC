@@ -309,7 +309,7 @@ void * car_EasttoWest(void *arg)
 		number[current_East_id] = tmp + 1;
 	}
 	pthread_mutex_unlock(&mutex_dir);
-	printf("car %d from N arrives\n", current_East_id);
+	printf("car %d from E arrives\n", current_East_id);
 	for (int i = 0; i < total_car; i++)
 	{
 		while (number[i] != 0 && number[current_East_id]>number[i])
@@ -320,7 +320,7 @@ void * car_EasttoWest(void *arg)
 	if (remain == 0 && dir == East) {
 		pthread_cond_signal(&deadlock);
 		pthread_cond_wait(&deadlock_solve, &mutex_dir);
-		printf("car %d from N left\n", current_East_id);
+		printf("car %d from E left\n", current_East_id);
 		car_has_dealed++;
 		resource++;
 		East_for_resource1 = 0;
@@ -331,7 +331,7 @@ void * car_EasttoWest(void *arg)
 	//
 	else if (North_for_resource1) {
 		if (is_deadlock) {
-			printf("car %d from N left\n", current_East_id);
+			printf("car %d from E left\n", current_East_id);
 			car_has_dealed++;
 			resource++;
 			if (dir == South) {
@@ -344,7 +344,7 @@ void * car_EasttoWest(void *arg)
 		}
 		else {
 			East_for_resource1 = 0;
-			printf("car %d from East left\n", current_East_id);
+			printf("car %d from E left\n", current_East_id);
 			car_has_dealed++;
 			resource++;
 			if (South_for_resource1) pthread_cond_signal(&GoSouth);
@@ -357,7 +357,7 @@ void * car_EasttoWest(void *arg)
 		}
 	}
 	else {
-		printf("car %d from N left\n", current_East_id);
+		printf("car %d from E left\n", current_East_id);
 		car_has_dealed++;
 		resource++;
 		East_for_resource1 = 0;
