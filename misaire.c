@@ -4,7 +4,7 @@
 #include <unistd.h>
 #include <pthread.h>
 #include <semaphore.h>
-
+#include <stdbool.h>
 #define MAX 1000
 typedef struct queue {
 	int head;
@@ -40,6 +40,15 @@ int count(queue q)
 {
 	return q.length;
 }
+
+
+void* check_deadlock(void*arg)
+void active_Car() 
+void * car_NorthtoSouth(void *arg)
+void * car_SouthtoNorth(void *arg)
+void * car_EasttoWest(void *arg)
+void * car_WesttoEast(void *arg)
+	
 pthread_cond_t deadlock;
 pthread_cond_t deadlock_solve;
 pthread_cond_t firstWest;
@@ -57,10 +66,11 @@ pthread_mutex_t wait_North;
 pthread_mutex_t wait_South;
 pthread_mutex_t mutex_car;
 pthread_mutex_t mutex_dir;
+pthread_mutex_t mutex_deadlock;
 pthread_t thread_pool[MAX];
 
 bool is_deadlock = false;
-typedef enum { West, North, South, East } dir_t;
+typedef enum { West, North, South, East } dir;
 
 int Cars_id[MAX];
 queue car_North;
@@ -72,7 +82,7 @@ int current_North_id;
 int current_South_id;
 int current_East_id;
 int current_West_id;
-
+int total_car=0;
 int West_for_resource1;
 int East_for_resource1;
 int North_for_resource1;
