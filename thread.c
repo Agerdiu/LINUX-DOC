@@ -45,7 +45,7 @@ pthread_mutex_t NorthMutex, SouthMutex, EastMutex, WestMutex;//mutex for updatin
 
 pthread_cond_t NorthCond, SouthCond, EastCond, WestCond;  //conditional variables for activing the queue thread
 
-bool FirstNorth, FirstSouth, FirstEast, FirstWest;//bool variables preventing starvation
+bool First_North, First_South, First_East, First_West;//bool variables preventing starvation
 
 pthread_mutex_t FirstNorthMutex, FirstSouthMutex, FirstEastMutex, FirstWestMutex;//mutex for updating four bool variables above	
 
@@ -65,9 +65,9 @@ pthread_mutex_t CurNorthMutex, CurSouthMutex, CurEastMutex, CurWestMutex; //mute
 
 bool NorthHasCar = false, SouthHasCar = false, EastHasCar = false, WestHasCar = false;//four bool variables to represent whether existing cars in every dirs
 
-int Empty = 4;//Empty number  a b c d
+int Resources = 4;//Cross Resources
 
-pthread_mutex_t EmptyMutex;//mutex for updating integer variable Empty
+pthread_mutex_t EmptyMutex;//mutex for updating integer variable Resources
 
 bool DeadlockOver; //bool variable to represent whether the deadlock is over
 
@@ -103,7 +103,7 @@ void CrossOpen()  //active the whole program
 int enterTheCrossing(dir Dir, int CarNumber)  //when a car comes to the crossing
 {
 	pthread_mutex_t* Road;
-	switch (Dir)  //judge which Empty the car needs
+	switch (Dir)  //judge which Resources the car needs
 	{
 	case NORTH:  //the car from north needs c firstly
 		Road = &Mutex_NW;
@@ -139,9 +139,9 @@ int enterTheCrossing(dir Dir, int CarNumber)  //when a car comes to the crossing
 		break;
 	}
 
-	//update the number of Empty
+	//update the number of Resources
 	pthread_mutex_lock(&EmptyMutex);
-	int Remainder = --Empty;  //record the remaind Empty to judge deadlock
+	int Remainder = --Resources;  //record the remaind Resources to judge deadlock
 	pthread_mutex_unlock(&EmptyMutex);
 
 	return Remainder;
@@ -173,7 +173,7 @@ void detectDeadlock(dir Dir, int Remainder)  //detect the deadlock
 	}
 	printf("DEADLOCK car jam detected. signal %s to go\n", Dir == 0 ? "East" : Dir == 1 ? "South" : Dir == 2 ? "West" : "North");
 	DeadlockOver = false;  //the deadlock is to be solved
-	pthread_mutex_unlock(Road);  //the car who detect deadlock unlock its Empty
+	pthread_mutex_unlock(Road);  //the car who detect deadlock unlock its Resources
 	switch (Dir)  //then the dir of the car must not have car
 	{
 	case NORTH:
@@ -199,7 +199,7 @@ void detectDeadlock(dir Dir, int Remainder)  //detect the deadlock
 	}
 	pthread_mutex_unlock(&DeadlockOverMutex);
 
-	pthread_mutex_lock(Road);  //when deadlock is solved, the car will get the Empty again
+	pthread_mutex_lock(Road);  //when deadlock is solved, the car will get the Resources again
 	switch (Dir)  //then update the HasCar in its dir
 	{
 	case NORTH:
@@ -257,8 +257,8 @@ void judgeRight(dir Dir)  //judge whether there is car crossing on its right
 
 void leave(dir Dir, int CarNumber)  //leave the crossing
 {
-	pthread_mutex_t* Road1;  //the first Empty
-	pthread_mutex_t* Road2;  //the second Empty
+	pthread_mutex_t* Road1;  //the first Resources
+	pthread_mutex_t* Road2;  //the second Resources
 	pthread_mutex_t* FirstMutex;
 	pthread_cond_t* FirstCond;
 	bool* First;
@@ -270,7 +270,7 @@ void leave(dir Dir, int CarNumber)  //leave the crossing
 		Road1 = &Mutex_NW;
 		Road2 = &Mutex_SW;
 		HasCar = &NorthHasCar;
-		First = &FirstEast;
+		First = &First_East;
 		FirstCond = &FirstEast;
 		FirstMutex = &FirstEastMutex;
 		break;
@@ -278,7 +278,7 @@ void leave(dir Dir, int CarNumber)  //leave the crossing
 		Road1 = &Mutex_SE;
 		Road2 = &Mutex_NE;
 		HasCar = &SouthHasCar;
-		First = &FirstWest;
+		First = &First_West;
 		FirstCond = &FirstWest;
 		FirstMutex = &FirstWestMutex;
 		break;
@@ -286,7 +286,7 @@ void leave(dir Dir, int CarNumber)  //leave the crossing
 		Road1 = &Mutex_NE;
 		Road2 = &Mutex_NW;
 		HasCar = &EastHasCar;
-		First = &FirstSouth;
+		First = &First_South;
 		FirstCond = &FirstSouth;
 		FirstMutex = &FirstSouthMutex;
 		break;
@@ -294,24 +294,24 @@ void leave(dir Dir, int CarNumber)  //leave the crossing
 		Road1 = &Mutex_SW;
 		Road2 = &Mutex_SE;
 		HasCar = &WestHasCar;
-		First = &FirstNorth;
+		First = &First_North;
 		FirstCond = &FirstNorth;
 		FirstMutex = &FirstNorthMutex;
 		break;
 	}
-	pthread_mutex_lock(Road2);  //lock the secend Empty
-	pthread_mutex_unlock(Road1);  //unlock the first Empty
+	pthread_mutex_lock(Road2);  //lock the secend Resources
+	pthread_mutex_unlock(Road1);  //unlock the first Resources
 	printf("car %d from %s leaving crossing\n", CarNumber, Dir == 0 ? "North" : Dir == 1 ? "East" : Dir == 2 ? "South" : "West");
-	//update the number of Empty
-	pthread_mutex_unlock(Road2);  //unlock the second Empty
+	//update the number of Resources
+	pthread_mutex_unlock(Road2);  //unlock the second Resources
 	pthread_mutex_lock(&EmptyMutex);
-	Empty++;
+	Resources++;
 	pthread_mutex_unlock(&EmptyMutex);
 
 	DeadlockOver = true;  //deadlock must be over because there is car crossing
 	pthread_cond_signal(&DeadlockOverCond);  //active the car waiting for deadlock
 
-											 //pthread_mutex_unlock(Road2);  //unlock the second Empty
+											 //pthread_mutex_unlock(Road2);  //unlock the second Resources
 
 	*HasCar = false;  //now the car has left and the dir doesn't have car crossing
 
@@ -389,7 +389,7 @@ void* northCar(void* arg)  //the function north car will run
 	}
 	pthread_mutex_unlock(&NorthMutex);
 
-	int Remainder = enterTheCrossing(NORTH, CarNumber);  //try to get the Empty
+	int Remainder = enterTheCrossing(NORTH, CarNumber);  //try to get the Resources
 	detectDeadlock(NORTH, Remainder);  //detect the deadlock
 	judgeRight(NORTH);  //judge whether it needs to let the right car go firstly
 	leave(NORTH, CarNumber);  //then go
