@@ -98,12 +98,12 @@ void CrossOpen()  //active the whole program
 
 void DeadlockDealing(dir Dir)  //detect the deadlock
 {
-	if (Resource != 0) return;  //if a b c and d aren't used up, it must be not deadlock
+	if (Resources != 0) return;  //if a b c and d aren't used up, it must be not deadlock
 	pthread_mutex_t* Cross;
 	pthread_cond_t* Togo;
 	Cross = &Mutex_SW;
 	Togo = &FirstNorth;
-	printf("DEADLOCK car jam detected. signal N to go\n"");
+	printf("DEADLOCK car jam detected. signal N to go\n");
 	DeadlockOver = false;  //the deadlock is to be solved
 	pthread_mutex_unlock(Cross);  //the car who detect deadlock unlock its Resources
 	NorthHasCar = false;
