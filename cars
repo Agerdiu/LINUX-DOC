@@ -1,0 +1,193 @@
+#include<stdio.h>
+#include<stdlib.h>
+#include<string.h>
+#include<pthread.h>
+#include<unistd.h>
+#include<time.h> 
+#define MAX 10000
+
+typedef struct car * carptr;
+
+//车的结构，车辆队列以链表形式存在
+struct car{
+	pthread_t pthreadid;//进程id
+	int id;//所有车中此车的id
+	int type;//0->south,1->east,2->north,3->west
+	carptr next;//后一辆车
+	carptr prev;//前一辆车
+};
+
+pthread_mutex_t road[4];//0->a,1->b,2->c,3->d
+pthread_mutex_t first[4];//队列第一锁
+pthread_mutex_t hasLeft[4];//左方锁
+pthread_mutex_t waitMutex;//当无法获得第二路口锁时使用的等待锁
+pthread_mutex_t printMutex;//输出信息锁，防止之后退出的车辆先输出信息
+pthread_cond_t cond_left[4];//左条件，当左方有车的时候等待
+pthread_cond_t cond_back[4];//后条件，当前方有车的时候等待
+pthread_cond_t cond_right[4];//右条件，当无法获得第二路口锁时等待【即右方有车】
+char* name[4]={"SOUTH","EAST","NORTH","WEST"};//名字，用于输出
+carptr head[4];//队列中的头
+carptr tail[4];//队列中的尾，若head[i]->next=tail[i],说明此队列为空
+carptr aggregate[MAX];//所有的车的存储
+int deadLockExit=1;//死锁退出信号
+int counter[4]={0};//每个方向的车数量计数器
+int sum=0,position=0;//sum为某辆车之前所有车的数量总和，position最后为车的总量
+int enter[MAX];//输入存储数组
+int isIn[4]={0,0,0,0};//死锁判断信号，为1代表此方向有车在路口
+
+void *checkDeadLock(void* arg){//死锁进程，每隔1s判断死锁是否发生
+	int deadflag=0;
+	while(deadLockExit){//判断死锁进程是否要结束
+		if(isIn[0]&&isIn[1]&&isIn[2]&&isIn[3])
+			deadflag=1;//如果所有方向都有车到达路口，说明发生死锁
+		if(deadflag==1){
+			//发生死锁时，默认北方的车先行，即给它的可能停住的两个状态发信号
+			printf("DEADLOCK: car jam detected, signalling North to go.\n");
+			pthread_cond_signal(&cond_right[2]);
+			pthread_cond_signal(&cond_left[2]);
+		}
+		deadflag=0;
+		sleep(1);
+	}
+}
+
+void *Thread(void *arg){//车辆行驶进程
+	carptr car=(carptr)arg;
+	int type=car->type;
+	int result;
+
+	pthread_mutex_lock(&hasLeft[(type+1)%4]);//首先锁住右边车的左方锁，保证来车和判断操作是原子的
+		tail[type]->prev->next=car;
+		car->prev=tail[type]->prev;
+		car->next=tail[type];
+		tail[type]->prev=car;
+	pthread_mutex_unlock(&hasLeft[(type+1)%4]);//右边车的左方锁解锁
+
+	//等待此方向当前队列轮到自己 
+	pthread_mutex_lock(&first[type]);//车辆队列锁
+	counter[type]++;//车辆数量+1
+	if (head[type]->next!=car){//当前方向已有车在通行
+		pthread_cond_wait(&cond_back[type],&first[type]);//等待通行信号
+	}
+	pthread_mutex_lock(&printMutex);//输出信息锁，防止之后退出的车辆先输出信息
+	car->id=++sum;
+	printf("A car with ID %d from %s arrives at crossing\n",car->id,name[type]);//到达路口
+	pthread_mutex_unlock(&printMutex);
+	isIn[type]=1;//死锁判断变量，表示此方向有车到达路口
+	pthread_mutex_unlock(&first[type]);//车辆队列锁解锁
+
+	//判断左方是否有车，有车就等待，防止撞车
+	pthread_mutex_lock(&hasLeft[type]);//左方锁，和左方的车共享，保证判断操作是原子的
+	if(head[(type+3)%4]->next!=tail[(type+3)%4]){
+		pthread_cond_wait(&cond_right[type],&hasLeft[type]);
+	}
+	pthread_mutex_lock(&road[type]);//第一路口锁
+	pthread_mutex_unlock(&hasLeft[type]);//左方锁解锁
+	
+	
+	usleep(5000);
+	int x=pthread_mutex_trylock(&road[(type+1)%4]);//尝试锁第二路口锁
+	if(x!=0){//如果没有锁上，说明右方已经有车
+		pthread_mutex_lock(&waitMutex);//等待锁
+		pthread_cond_wait(&cond_left[type],&waitMutex);//等待右方车行驶结束后给自己发信号
+		if(type==2)
+			printf("success\n");
+		pthread_mutex_lock(&road[(type+1)%4]);//获得信号后锁住第二路口锁
+		pthread_mutex_unlock(&waitMutex);//等待锁解锁
+	}
+	counter[type]--;//车辆数量-1
+	pthread_mutex_lock(&printMutex);
+	printf("A car with ID %d leaves the %s waiting queue.\n",car->id,name[type]);//离开路口	
+	pthread_mutex_unlock(&printMutex);
+	head[type]->next=car->next;//将自己移除出此方向的队列，把后一辆车提到路口处
+	car->next->prev=head[type];
+	isIn[type]=0;//死锁判断变量，表示此方向无车在路口
+	pthread_mutex_unlock(&road[type]);//第一路口锁解锁
+	pthread_mutex_unlock(&road[(type+1)%4]);//第二路口锁解锁
+
+	pthread_cond_signal(&cond_right[(type+1)%4]);//给右边的车发信号，告诉其可以通行
+	usleep(5000);//加上usleep可以使输出结果更加规整，但是因为逻辑上不好判断所以在此移去，结果依然正确
+	pthread_cond_signal(&cond_left[(type+3)%4]);//给左边的车发信号，告诉其可以通行
+	usleep(5000);
+	pthread_cond_signal(&cond_back[type]);//给后边的车发信号，告诉其可以通行
+
+	pthread_exit(NULL);//离开线程
+}
+
+int main(){
+	int type,ret;
+	char c;
+	//初始化所有锁和条件
+	pthread_mutex_init(&printMutex,NULL);
+	pthread_mutex_init(&waitMutex,NULL);
+
+	for(int i=0;i<4;i++){
+		pthread_mutex_init(&road[i],NULL);
+		pthread_mutex_init(&first[i],NULL);
+		pthread_mutex_init(&hasLeft[i],NULL);
+		pthread_cond_init(&cond_left[i],NULL);
+		pthread_cond_init(&cond_back[i],NULL);
+		pthread_cond_init(&cond_right[i],NULL);
+		head[i]=(carptr)malloc(sizeof(struct car));
+		tail[i]=(carptr)malloc(sizeof(struct car));
+		head[i]->next = tail[i]; 
+		head[i]->prev = NULL;
+        tail[i]->next = NULL; 
+        tail[i]->prev = head[i];
+	}
+	//创建死锁进程
+	pthread_t deadLockId;
+	pthread_create(&deadLockId,NULL,(void *)checkDeadLock,NULL);
+
+	//用输入来代表各方向的车
+	printf("please enter the direction of cars:");
+	while((c=getchar())!='\n'){
+		switch(c){
+			case 's':
+			enter[position++]=0;
+			break;
+			case 'e':
+			enter[position++]=1;
+			break;
+			case 'n':
+			enter[position++]=2;
+			break;
+			case 'w':
+			enter[position++]=3;
+			break;
+			default:
+			printf("enter format error");
+			return 0;
+			break;
+		}
+	}
+	for(int i=0;i<position;i++){
+		type=enter[i];//将此车生成car结构，并放入其方向的队列中
+		counter[type]++;
+		carptr newcar=(carptr)malloc(sizeof(struct car));
+		newcar->type=type;
+
+		aggregate[i]=newcar;
+		
+		ret=pthread_create(&(newcar->pthreadid),NULL,(void *)Thread,(void *)newcar);//创建车的进程
+		if(ret!=0){  //判断进程是否创建成功
+			printf("Create %s pthread error!\n",name[type]);  
+			return -1;  
+		}
+	}
+
+	//等待车的进程全部结束
+	for(int i=0;i<position;i++)
+		pthread_join(aggregate[i]->pthreadid,NULL);
+	deadLockExit=0;//给死锁进程发信号，通知其结束
+
+	//销毁所有锁和条件
+	pthread_mutex_destroy(&printMutex);
+	pthread_mutex_destroy(&waitMutex);
+	for(int i=0;i<4;i++){
+		pthread_mutex_destroy(&road[i]);
+		pthread_mutex_destroy(&first[i]);;
+		pthread_cond_destroy(&cond_left[i]);
+		pthread_cond_destroy(&cond_back[i]);
+	}
+}
