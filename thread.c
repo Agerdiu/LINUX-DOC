@@ -2,13 +2,10 @@
 #include <pthread.h>
 #include <sys/unistd.h>
 #include <string.h>
+#include <stdbool.h>
 
 #define MAX 100  //define max car numbers
-
-typedef enum { NO_DIR, NORTH, EAST, SOUTH, WEST } dir;
-
-typedef enum { false, true } bool;
-
+typedef enum { NORTH, EAST, SOUTH, WEST } dir;
 typedef struct queue queue;
 struct queue {
 	int front;  //index of the head of a queue
@@ -121,20 +118,22 @@ int enterTheCrossing(dir Dir, int CarNumber)  //when a car comes to the crossing
 		break;
 	}
 	pthread_mutex_lock(Road);  //lock or wait to lock it
-	printf("car %d from %s arrives at crossing\n", CarNumber, Dir == 1 ? "North" : Dir == 2 ? "East" : Dir == 3 ? "South" : "West");
-
 	switch (Dir)  //update HasCar variables because the car is crossing
 	{
 	case NORTH:
+                printf("car %d from N arrives at crossing\n", CarNumber);
 		NorthHasCar = true;
 		break;
 	case SOUTH:
+                printf("car %d from S arrives at crossing\n", CarNumber);
 		SouthHasCar = true;
 		break;
 	case EAST:
+                printf("car %d from E arrives at crossing\n", CarNumber);
 		EastHasCar = true;
 		break;
 	case WEST:
+                printf("car %d from W arrives at crossing\n", CarNumber);
 		WestHasCar = true;
 		break;
 	}
@@ -171,7 +170,7 @@ void detectDeadlock(dir Dir, int Remainder)  //detect the deadlock
 		First = &FirstNorthCond;
 		break;
 	}
-	printf("DEADLOCK car jam detected. signal %s to go\n", Dir == 1 ? "East" : Dir == 2 ? "South" : Dir == 3 ? "West" : "North");
+	printf("DEADLOCK car jam detected. signal %s to go\n", Dir == 0 ? "East" : Dir == 1 ? "South" : Dir == 2 ? "West" : "North");
 	DeadlockOver = false;  //the deadlock is to be solved
 	pthread_mutex_unlock(Road);  //the car who detect deadlock unlock its Empty
 	switch (Dir)  //then the dir of the car must not have car
@@ -301,7 +300,7 @@ void leave(dir Dir, int CarNumber)  //leave the crossing
 	}
 	pthread_mutex_lock(Road2);  //lock the secend Empty
 	pthread_mutex_unlock(Road1);  //unlock the first Empty
-	printf("car %d from %s leaving crossing\n", CarNumber, Dir == 1 ? "North" : Dir == 2 ? "East" : Dir == 3 ? "South" : "West");
+	printf("car %d from %s leaving crossing\n", CarNumber, Dir == 0 ? "North" : Dir == 1 ? "East" : Dir == 2 ? "South" : "West");
 	//update the number of Empty
 	pthread_mutex_unlock(Road2);  //unlock the second Empty
 	pthread_mutex_lock(&EmptyMutex);
