@@ -8,19 +8,19 @@
 typedef enum { NORTH, EAST, SOUTH, WEST } dir;
 typedef struct queue queue;
 struct queue {
-	int front;  //index of the head of a queue
-	int rear;  //index of the rear of a queue
-	int count;  //number of cars in a queue
-	int num[MAX];  //array to store car id
+	int front;  //head
+	int rear;  //rear
+	int count;  //number of cars
+	int num[MAX];  //Car id in this way
 };
 
-void init(queue* q) {
+void init(queue* q) { 
 	q->front = 0;
 	q->rear = 0;
 	q->count = 0;
 }
 
-void push(queue* q, int i) {
+void enqueue(queue* q, int i) {
 	q->rear = (q->rear + 1) % MAX;
 	q->count++;
 	q->num[q->rear] = i;
@@ -51,9 +51,15 @@ pthread_mutex_t FirstNorthMutex, FirstSouthMutex, FirstEastMutex, FirstWestMutex
 
 pthread_cond_t FirstNorth, FirstSouth, FirstEast, FirstWest; //conditional variables for activing the waiting thread
 
-pthread_mutex_t Mutex_a, Mutex_b, Mutex_c, Mutex_d;//mutex for a.b.c.d road
-
-int CurNorth = 0, CurSouth = 0, CurEast = 0, CurWest = 0; //car's ID crossing the road in four directions
+pthread_mutex_t Mutex_SE, Mutex_NE, Mutex_NW, Mutex_SW;//mutex for cross:
+/*
+——|        |——
+     NW   NE
+———————
+	 SW    SE
+——|        |——
+*/
+int CurID_North = 0, CurID_South = 0, CurID_East = 0, CurID_West = 0; //car's ID crossing the road in four directions
 
 pthread_mutex_t CurNorthMutex, CurSouthMutex, CurEastMutex, CurWestMutex; //mutex for updating four integer variables above
 
@@ -74,22 +80,22 @@ void CrossOpen()  //active the whole program
 {
 	if (!is_empty(&North))  //if north has car, pop a car from queue
 	{
-		CurNorth = pop(&North);
+		CurID_North = pop(&North);
 		pthread_cond_broadcast(&NorthCond);  //active the waiting thread(car)
 	}
 	if (!is_empty(&South))  //same with north
 	{
-		CurSouth = pop(&South);
+		CurID_South = pop(&South);
 		pthread_cond_broadcast(&SouthCond);
 	}
 	if (!is_empty(&East))  //same with north
 	{
-		CurEast = pop(&East);
+		CurID_East = pop(&East);
 		pthread_cond_broadcast(&EastCond);
 	}
 	if (!is_empty(&West))  //same with north
 	{
-		CurWest = pop(&West);
+		CurID_West = pop(&West);
 		pthread_cond_broadcast(&WestCond);
 	}
 }
@@ -100,16 +106,16 @@ int enterTheCrossing(dir Dir, int CarNumber)  //when a car comes to the crossing
 	switch (Dir)  //judge which Empty the car needs
 	{
 	case NORTH:  //the car from north needs c firstly
-		Road = &Mutex_c;
+		Road = &Mutex_NW;
 		break;
 	case SOUTH:  //the car from south needs a firstly
-		Road = &Mutex_a;
+		Road = &Mutex_SE;
 		break;
 	case EAST:  //the car from east needs b firstly
-		Road = &Mutex_b;
+		Road = &Mutex_NE;
 		break;
 	case WEST:  //the car from west needs d firstly
-		Road = &Mutex_d;
+		Road = &Mutex_SW;
 		break;
 	}
 	pthread_mutex_lock(Road);  //lock or wait to lock it
@@ -149,19 +155,19 @@ void detectDeadlock(dir Dir, int Remainder)  //detect the deadlock
 	switch (Dir)  //record who detect the deadlock and the left car
 	{
 	case NORTH:  //the car from north lock c and will signal its left(east) car
-		Road = &Mutex_c;
+		Road = &Mutex_NW;
 		First = &FirstEast;
 		break;
 	case SOUTH:  //same with north
-		Road = &Mutex_a;
+		Road = &Mutex_SE;
 		First = &FirstWest;
 		break;
 	case EAST:  //same with north
-		Road = &Mutex_b;
+		Road = &Mutex_NE;
 		First = &FirstSouth;
 		break;
 	case WEST:  //same with north
-		Road = &Mutex_d;
+		Road = &Mutex_SW;
 		First = &FirstNorth;
 		break;
 	}
@@ -261,32 +267,32 @@ void leave(dir Dir, int CarNumber)  //leave the crossing
 	switch (Dir)  //record
 	{
 	case NORTH:  //record two Emptys the car needs
-		Road1 = &Mutex_c;
-		Road2 = &Mutex_d;
+		Road1 = &Mutex_NW;
+		Road2 = &Mutex_SW;
 		HasCar = &NorthHasCar;
 		First = &FirstEast;
 		FirstCond = &FirstEast;
 		FirstMutex = &FirstEastMutex;
 		break;
 	case SOUTH:  //same with north
-		Road1 = &Mutex_a;
-		Road2 = &Mutex_b;
+		Road1 = &Mutex_SE;
+		Road2 = &Mutex_NE;
 		HasCar = &SouthHasCar;
 		First = &FirstWest;
 		FirstCond = &FirstWest;
 		FirstMutex = &FirstWestMutex;
 		break;
 	case EAST:  //same with north
-		Road1 = &Mutex_b;
-		Road2 = &Mutex_c;
+		Road1 = &Mutex_NE;
+		Road2 = &Mutex_NW;
 		HasCar = &EastHasCar;
 		First = &FirstSouth;
 		FirstCond = &FirstSouth;
 		FirstMutex = &FirstSouthMutex;
 		break;
 	case WEST:  //same with north
-		Road1 = &Mutex_d;
-		Road2 = &Mutex_a;
+		Road1 = &Mutex_SW;
+		Road2 = &Mutex_SE;
 		HasCar = &WestHasCar;
 		First = &FirstNorth;
 		FirstCond = &FirstNorth;
@@ -330,28 +336,28 @@ void afterLeave(dir Dir)  //when a car has left, it needs active the cars after 
 		q = &North;
 		QueueMutex = &NorthMutex;
 		QueueCond = &NorthCond;
-		Cur = &CurNorth;
+		Cur = &CurID_North;
 		CurMutex = &CurNorthMutex;
 		break;
 	case SOUTH:  //same with north
 		q = &South;
 		QueueMutex = &SouthMutex;
 		QueueCond = &SouthCond;
-		Cur = &CurSouth;
+		Cur = &CurID_South;
 		CurMutex = &CurSouthMutex;
 		break;
 	case EAST:  //same with north
 		q = &East;
 		QueueMutex = &EastMutex;
 		QueueCond = &EastCond;
-		Cur = &CurEast;
+		Cur = &CurID_East;
 		CurMutex = &CurEastMutex;
 		break;
 	case WEST:  //same with north
 		q = &West;
 		QueueMutex = &WestMutex;
 		QueueCond = &WestCond;
-		Cur = &CurWest;
+		Cur = &CurID_West;
 		CurMutex = &CurWestMutex;
 		break;
 	}
@@ -377,7 +383,7 @@ void* northCar(void* arg)  //the function north car will run
 	int CarNumber = *((int*)arg);  //get the car id
 
 	pthread_mutex_lock(&NorthMutex);
-	while (CurNorth != CarNumber)
+	while (CurID_North != CarNumber)
 	{
 		pthread_cond_wait(&NorthCond, &NorthMutex);  //wait until the car id equals Cur id(should cross)
 	}
@@ -395,7 +401,7 @@ void* southCar(void* arg)  //same with northCar
 {
 	int CarNumber = *((int*)arg);
 	pthread_mutex_lock(&SouthMutex);
-	while (CurSouth != CarNumber)
+	while (CurID_South != CarNumber)
 	{
 		pthread_cond_wait(&SouthCond, &SouthMutex);
 	}
@@ -413,7 +419,7 @@ void* eastCar(void* arg)  //same with northCar
 {
 	int CarNumber = *((int*)arg);
 	pthread_mutex_lock(&EastMutex);
-	while (CurEast != CarNumber)
+	while (CurID_East != CarNumber)
 	{
 		pthread_cond_wait(&EastCond, &EastMutex);
 	}
@@ -431,7 +437,7 @@ void* westCar(void* arg)  //same with northCar
 {
 	int CarNumber = *((int*)arg);
 	pthread_mutex_lock(&WestMutex);
-	while (CurWest != CarNumber)
+	while (CurID_West != CarNumber)
 	{
 		pthread_cond_wait(&WestCond, &WestMutex);
 	}
@@ -476,10 +482,10 @@ int main()
 	pthread_cond_init(&FirstEast, NULL);
 	pthread_cond_init(&FirstWest, NULL);
 
-	pthread_mutex_init(&Mutex_a, NULL);
-	pthread_mutex_init(&Mutex_b, NULL);
-	pthread_mutex_init(&Mutex_c, NULL);
-	pthread_mutex_init(&Mutex_d, NULL);
+	pthread_mutex_init(&Mutex_SE, NULL);
+	pthread_mutex_init(&Mutex_NE, NULL);
+	pthread_mutex_init(&Mutex_NW, NULL);
+	pthread_mutex_init(&Mutex_SW, NULL);
 
 	pthread_mutex_init(&CurNorthMutex, NULL);
 	pthread_mutex_init(&CurSouthMutex, NULL);
@@ -505,43 +511,43 @@ int main()
 	{
 		switch (input[i - 1])
 		{
-		case 'n':  //push into North cars , create thread;
-			push(&North, i);
+		case 'n':  //enqueue into North cars , create thread;
+			enqueue(&North, i);
 			pthread_create(&Cars[i], NULL, northCar, (void*)(&id[i]));
 			usleep(1);  //improve coCur
 			break;
-		case 's':  //push into South cars , create thread;
-			push(&South, i);
+		case 's':  //enqueue into South cars , create thread;
+			enqueue(&South, i);
 			pthread_create(&Cars[i], NULL, southCar, (void*)(&id[i]));
 			usleep(1);
 			break;
-		case 'e':  //push into East cars , create thread;
-			push(&East, i);
+		case 'e':  //enqueue into East cars , create thread;
+			enqueue(&East, i);
 			pthread_create(&Cars[i], NULL, eastCar, (void*)(&id[i]));
 			usleep(1);
 			break;
-		case 'w':  //push into West cars , create thread;
-			push(&West, i);
+		case 'w':  //enqueue into West cars , create thread;
+			enqueue(&West, i);
 			pthread_create(&Cars[i], NULL, westCar, (void*)(&id[i]));
 			usleep(1);
 			break;
 		case 'N':  //same to 'n'
-			push(&North, i);
+			enqueue(&North, i);
 			pthread_create(&Cars[i], NULL, northCar, (void*)(&id[i]));
 			usleep(1);  //improve coCur
 			break;
 		case 'S':  //same to 's'
-			push(&South, i);
+			enqueue(&South, i);
 			pthread_create(&Cars[i], NULL, southCar, (void*)(&id[i]));
 			usleep(1);
 			break;
 		case 'E':  //same to 'e'
-			push(&East, i);
+			enqueue(&East, i);
 			pthread_create(&Cars[i], NULL, eastCar, (void*)(&id[i]));
 			usleep(1);
 			break;
 		case 'W':  //same to 'w'
-			push(&West, i);
+			enqueue(&West, i);
 			pthread_create(&Cars[i], NULL, westCar, (void*)(&id[i]));
 			usleep(1);
 			break;
@@ -579,10 +585,10 @@ int main()
 	pthread_cond_destroy(&FirstEast);
 	pthread_cond_destroy(&FirstWest);
 
-	pthread_mutex_destroy(&Mutex_a);
-	pthread_mutex_destroy(&Mutex_b);
-	pthread_mutex_destroy(&Mutex_c);
-	pthread_mutex_destroy(&Mutex_d);
+	pthread_mutex_destroy(&Mutex_SE);
+	pthread_mutex_destroy(&Mutex_NE);
+	pthread_mutex_destroy(&Mutex_NW);
+	pthread_mutex_destroy(&Mutex_SW);
 
 	pthread_mutex_destroy(&CurNorthMutex);
 	pthread_mutex_destroy(&CurSouthMutex);
