@@ -402,25 +402,31 @@ void* northCar(void* arg)  //the function north car will run
 	while (WestHasCar)		pthread_cond_wait(&FirstNorth, &FirstNorthMutex);
 	pthread_mutex_unlock(&FirstNorthMutex);
 	//leaving
-	//leave(NORTH, CarNumber);  //then go
 	pthread_mutex_lock(&Mutex_SW);  //lock the secend Resources
 	pthread_mutex_unlock(&Mutex_NW);  //unlock the first Resources
-	printf("car %d from N leaving crossing\n", CarNumber);
-	//update the number of Resources
+	printf("car %d from N leaving crossing\n", CarNumber);	
 	pthread_mutex_unlock(&Mutex_SW);  //unlock the second Resources
 	pthread_mutex_lock(&EmptyMutex);
-	Resources++;
+	Resources++;  //update the number of Resources
 	pthread_mutex_unlock(&EmptyMutex);
 	DeadlockOver = true;  //deadlock must be over because there is car crossing
 	pthread_cond_signal(&DeadlockOverCond);  //active the car waiting for deadlock
-	NorthHasCar = false;  //now the car has left and the dir doesn't have car crossing
-					//the left car can go to prevent starvation
-	pthread_mutex_lock(&FirstEastMutex);
+	NorthHasCar = false;  //now the car has left and the dir doesn't have car crossing				
+	pthread_mutex_lock(&FirstEastMutex); //the left car can go to prevent starvation
 	First_East = true;
 	pthread_mutex_unlock(&FirstEastMutex);
 	pthread_cond_signal(&FirstEast);  //active the left car to cross
-
-	afterLeave(NORTH);  //active the car after it(the next car in the queue)
+    //active the car after it(the next car in the queue)
+	int* Cur;
+	//lock the queue and Cur varialbe and update them
+	pthread_mutex_lock(&NorthMutex);
+	pthread_mutex_lock(&CurNorthMutex);  
+	*Cur = pop(&North);  //the next car in this dir queue will be the crossing car
+	pthread_mutex_unlock(&CurNorthMutex);
+	pthread_mutex_unlock(&NorthMutex);
+	//sleep to wait all cars have been pushed into queue, then it will get broadcast
+	usleep(100);
+	pthread_cond_broadcast(&NorthCond);  //broadcast to all cars in the queue
 	return NULL;
 }
 
