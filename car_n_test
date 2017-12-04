@@ -416,17 +416,9 @@ void* northCar(void* arg)  //the function north car will run
 	First_East = true;
 	pthread_mutex_unlock(&FirstEastMutex);
 	pthread_cond_signal(&FirstEast);  //active the left car to cross
-    //active the car after it(the next car in the queue)
-	int* Cur;
-	//lock the queue and Cur varialbe and update them
-	pthread_mutex_lock(&NorthMutex);
-	pthread_mutex_lock(&CurNorthMutex);  
-	*Cur = pop(&North);  //the next car in this dir queue will be the crossing car
-	pthread_mutex_unlock(&CurNorthMutex);
-	pthread_mutex_unlock(&NorthMutex);
-	//sleep to wait all cars have been pushed into queue, then it will get broadcast
-	usleep(100);
-	pthread_cond_broadcast(&NorthCond);  //broadcast to all cars in the queue
+
+	afterLeave(NORTH);  //active the car after it(the next car in the queue)
+
 	return NULL;
 }
 
