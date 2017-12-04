@@ -387,8 +387,6 @@ void* northCar(void* arg)  //the function north car will run
 		pthread_cond_wait(&NorthCond, &NorthMutex);  //wait until the car id equals Cur id(should cross)
 	}
 	pthread_mutex_unlock(&NorthMutex);
-
-	//int Remainder = enterTheCrossing(NORTH, CarNumber);  
 	//try to get the Resources
 	pthread_mutex_lock(&Mutex_NW);  //lock or wait to lock it
     printf("car %d from N arrives at crossing\n", CarNumber);
@@ -399,14 +397,29 @@ void* northCar(void* arg)  //the function north car will run
 	pthread_mutex_unlock(&EmptyMutex);
 	//entered
 	detectDeadlock(NORTH, Remainder);  //detect the deadlock
-	//
-	//judgeRight(NORTH);  //judge whether it needs to let the right car go firstly
 	//when existing car crossing in the right, wait for the signal
 	pthread_mutex_lock(&FirstNorthMutex);
 	while (WestHasCar)		pthread_cond_wait(&FirstNorth, &FirstNorthMutex);
 	pthread_mutex_unlock(&FirstNorthMutex);
-	//
-	leave(NORTH, CarNumber);  //then go
+	//leaving
+	//leave(NORTH, CarNumber);  //then go
+	pthread_mutex_lock(&Mutex_SW);  //lock the secend Resources
+	pthread_mutex_unlock(&Mutex_NW);  //unlock the first Resources
+	printf("car %d from N leaving crossing\n", CarNumber);
+	//update the number of Resources
+	pthread_mutex_unlock(&Mutex_SW);  //unlock the second Resources
+	pthread_mutex_lock(&EmptyMutex);
+	Resources++;
+	pthread_mutex_unlock(&EmptyMutex);
+	DeadlockOver = true;  //deadlock must be over because there is car crossing
+	pthread_cond_signal(&DeadlockOverCond);  //active the car waiting for deadlock
+	NorthHasCar = false;  //now the car has left and the dir doesn't have car crossing
+					//the left car can go to prevent starvation
+	pthread_mutex_lock(&FirstEastMutex);
+	First_East = true;
+	pthread_mutex_unlock(&FirstEastMutex);
+	pthread_cond_signal(&FirstEast);  //active the left car to cross
+
 	afterLeave(NORTH);  //active the car after it(the next car in the queue)
 	return NULL;
 }
