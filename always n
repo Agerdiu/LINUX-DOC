@@ -41,7 +41,7 @@ pthread_mutex_t NorthMutex, SouthMutex, EastMutex, WestMutex;//mutex for updatin
 
 pthread_cond_t NorthCond, SouthCond, EastCond, WestCond;  //conditional variables for activing the queue thread
 
-bool First_North, First_South, First_East, First_West;//bool variables preventing starvation
+bool First_North, First_South, First_East, First_West;//bool variables for next car —— preventing starvation
 
 pthread_mutex_t FirstNorthMutex, FirstSouthMutex, FirstEastMutex, FirstWestMutex;//mutex for updating four bool variables above	
 
@@ -168,6 +168,7 @@ void* CarFromN(void* arg)  //the function north car will run
 	First_East = true;
 	pthread_mutex_unlock(&FirstEastMutex);
 	pthread_cond_signal(&FirstEast);  //active the left car to cross
+	First_East = false;
 	int* Cur;
 	Cur = &CurID_North;
 	//lock the queue and Cur varialbe and update them
@@ -220,6 +221,7 @@ void* CarFromS(void* arg)  //same with CarFromS
 	First_West = true;
 	pthread_mutex_unlock(&FirstWestMutex);
 	pthread_cond_signal(&FirstWest);  //active the left car to cross
+	First_West = false;
 	int* Cur;
 	Cur = &CurID_South;
 	//lock the queue and Cur varialbe and update them
@@ -269,9 +271,10 @@ void* CarFromE(void* arg)  //same with CarFromE
 	pthread_cond_signal(&DeadlockOverCond);  //active the car waiting for deadlock
 	EastHasCar = false;  //now the car has left and the dir doesn't have car crossing				
 	pthread_mutex_lock(&FirstSouthMutex); //the left car can go to prevent starvation
-	First_East = true;
+	First_South = true;
 	pthread_mutex_unlock(&FirstSouthMutex);
 	pthread_cond_signal(&FirstSouth);  //active the left car to cross
+	First_South = false;
 	int* Cur;
 	Cur = &CurID_East;
 	//lock the queue and Cur varialbe and update them
@@ -321,9 +324,10 @@ void* CarFromW(void* arg)  //same with CarFromN
 	pthread_cond_signal(&DeadlockOverCond);  //active the car waiting for deadlock
 	WestHasCar = false;  //now the car has left and the dir doesn't have car crossing				
 	pthread_mutex_lock(&FirstNorthMutex); //the left car can go to prevent starvation
-	First_West = true;
+	First_North = true;
 	pthread_mutex_unlock(&FirstNorthMutex);
 	pthread_cond_signal(&FirstNorth);  //active the left car to cross
+	First_North = false;
 	int* Cur;
 	Cur = &CurID_West;
 	//lock the queue and Cur varialbe and update them
