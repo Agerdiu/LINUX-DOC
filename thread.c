@@ -40,39 +40,34 @@ bool is_empty(queue* q) {
 }
 
 queue North, South, East, West;//four queues for four dirs to store cars
-pthread_mutex_t NorthMutex, SouthMutex, EastMutex, WestMutex;//mutex for updating four queues above
 
-															 //conditional variables for activing the queue thread
-pthread_cond_t NorthCond, SouthCond, EastCond, WestCond;
+pthread_mutex_t NorthMutex, SouthMutex, EastMutex, WestMutex;//mutex for updating four queues above			
+
+pthread_cond_t NorthCond, SouthCond, EastCond, WestCond;  //conditional variables for activing the queue thread
 
 bool FirstNorth, FirstSouth, FirstEast, FirstWest;//bool variables preventing starvation
-pthread_mutex_t FirstNorthMutex, FirstSouthMutex, FirstEastMutex, FirstWestMutex;//mutex for updating four bool variables above
 
-																				 //conditional variables for activing the waiting thread
-pthread_cond_t FirstNorthCond, FirstSouthCond, FirstEastCond, FirstWestCond;
+pthread_mutex_t FirstNorthMutex, FirstSouthMutex, FirstEastMutex, FirstWestMutex;//mutex for updating four bool variables above	
 
-//mutex for a.b.c.d road
-pthread_mutex_t Mutex_a, Mutex_b, Mutex_c, Mutex_d;
+pthread_cond_t FirstNorth, FirstSouth, FirstEast, FirstWest; //conditional variables for activing the waiting thread
 
-//four integer variables, the car id crossing the road for every dir
-int CurNorth = 0, CurSouth = 0, CurEast = 0, CurWest = 0;
-//mutex for updating four integer variables above
-pthread_mutex_t CurNorthMutex, CurSouthMutex, CurEastMutex, CurWestMutex;
+pthread_mutex_t Mutex_a, Mutex_b, Mutex_c, Mutex_d;//mutex for a.b.c.d road
 
-//four bool variables to represent whether existing cars in every dirs
-bool NorthHasCar = false, SouthHasCar = false, EastHasCar = false, WestHasCar = false;
+int CurNorth = 0, CurSouth = 0, CurEast = 0, CurWest = 0; //car's ID crossing the road in four directions
 
-//Empty number  a b c d
-int Empty = 4;
-//mutex for updating integer variable Empty
-pthread_mutex_t EmptyMutex;
+pthread_mutex_t CurNorthMutex, CurSouthMutex, CurEastMutex, CurWestMutex; //mutex for updating four integer variables above
 
-//bool variable to represent whether the deadlock is over
-bool DeadlockOver;
-//mutex for updating bool variable DeadlockOver
-pthread_mutex_t DeadlockOverMutex;
-//conditional variables for activing the waiting thread
-pthread_cond_t DeadlockOverCond;
+bool NorthHasCar = false, SouthHasCar = false, EastHasCar = false, WestHasCar = false;//four bool variables to represent whether existing cars in every dirs
+
+int Empty = 4;//Empty number  a b c d
+
+pthread_mutex_t EmptyMutex;//mutex for updating integer variable Empty
+
+bool DeadlockOver; //bool variable to represent whether the deadlock is over
+
+pthread_mutex_t DeadlockOverMutex; //mutex for updating bool variable DeadlockOver
+
+pthread_cond_t DeadlockOverCond; //conditional variables for activing the waiting thread
 
 
 void CrossOpen()  //active the whole program
@@ -121,19 +116,19 @@ int enterTheCrossing(dir Dir, int CarNumber)  //when a car comes to the crossing
 	switch (Dir)  //update HasCar variables because the car is crossing
 	{
 	case NORTH:
-                printf("car %d from N arrives at crossing\n", CarNumber);
+		printf("car %d from N arrives at crossing\n", CarNumber);
 		NorthHasCar = true;
 		break;
 	case SOUTH:
-                printf("car %d from S arrives at crossing\n", CarNumber);
+		printf("car %d from S arrives at crossing\n", CarNumber);
 		SouthHasCar = true;
 		break;
 	case EAST:
-                printf("car %d from E arrives at crossing\n", CarNumber);
+		printf("car %d from E arrives at crossing\n", CarNumber);
 		EastHasCar = true;
 		break;
 	case WEST:
-                printf("car %d from W arrives at crossing\n", CarNumber);
+		printf("car %d from W arrives at crossing\n", CarNumber);
 		WestHasCar = true;
 		break;
 	}
@@ -155,19 +150,19 @@ void detectDeadlock(dir Dir, int Remainder)  //detect the deadlock
 	{
 	case NORTH:  //the car from north lock c and will signal its left(east) car
 		Road = &Mutex_c;
-		First = &FirstEastCond;
+		First = &FirstEast;
 		break;
 	case SOUTH:  //same with north
 		Road = &Mutex_a;
-		First = &FirstWestCond;
+		First = &FirstWest;
 		break;
 	case EAST:  //same with north
 		Road = &Mutex_b;
-		First = &FirstSouthCond;
+		First = &FirstSouth;
 		break;
 	case WEST:  //same with north
 		Road = &Mutex_d;
-		First = &FirstNorthCond;
+		First = &FirstNorth;
 		break;
 	}
 	printf("DEADLOCK car jam detected. signal %s to go\n", Dir == 0 ? "East" : Dir == 1 ? "South" : Dir == 2 ? "West" : "North");
@@ -225,22 +220,22 @@ void judgeRight(dir Dir)  //judge whether there is car crossing on its right
 	{
 	case NORTH:  //the car in the right need wait for the west
 		FirstMutex = &FirstNorthMutex;
-		FirstCond = &FirstNorthCond;
+		FirstCond = &FirstNorth;
 		HasCar = &WestHasCar;
 		break;
 	case SOUTH:  //same with north
 		FirstMutex = &FirstSouthMutex;
-		FirstCond = &FirstSouthCond;
+		FirstCond = &FirstSouth;
 		HasCar = &EastHasCar;
 		break;
 	case EAST:  //same with north
 		FirstMutex = &FirstEastMutex;
-		FirstCond = &FirstEastCond;
+		FirstCond = &FirstEast;
 		HasCar = &NorthHasCar;
 		break;
 	case WEST:  //same with north
 		FirstMutex = &FirstWestMutex;
-		FirstCond = &FirstWestCond;
+		FirstCond = &FirstWest;
 		HasCar = &SouthHasCar;
 		break;
 	}
@@ -270,7 +265,7 @@ void leave(dir Dir, int CarNumber)  //leave the crossing
 		Road2 = &Mutex_d;
 		HasCar = &NorthHasCar;
 		First = &FirstEast;
-		FirstCond = &FirstEastCond;
+		FirstCond = &FirstEast;
 		FirstMutex = &FirstEastMutex;
 		break;
 	case SOUTH:  //same with north
@@ -278,7 +273,7 @@ void leave(dir Dir, int CarNumber)  //leave the crossing
 		Road2 = &Mutex_b;
 		HasCar = &SouthHasCar;
 		First = &FirstWest;
-		FirstCond = &FirstWestCond;
+		FirstCond = &FirstWest;
 		FirstMutex = &FirstWestMutex;
 		break;
 	case EAST:  //same with north
@@ -286,7 +281,7 @@ void leave(dir Dir, int CarNumber)  //leave the crossing
 		Road2 = &Mutex_c;
 		HasCar = &EastHasCar;
 		First = &FirstSouth;
-		FirstCond = &FirstSouthCond;
+		FirstCond = &FirstSouth;
 		FirstMutex = &FirstSouthMutex;
 		break;
 	case WEST:  //same with north
@@ -294,7 +289,7 @@ void leave(dir Dir, int CarNumber)  //leave the crossing
 		Road2 = &Mutex_a;
 		HasCar = &WestHasCar;
 		First = &FirstNorth;
-		FirstCond = &FirstNorthCond;
+		FirstCond = &FirstNorth;
 		FirstMutex = &FirstNorthMutex;
 		break;
 	}
@@ -453,15 +448,15 @@ void* westCar(void* arg)  //same with northCar
 int main()
 {
 	char input[MAX];
-        printf("Please input cars:\n");
+	printf("Please input cars:\n");
 	scanf("%s", input);
-        int CarNumber = strlen(input);
-	if (CarNumber==0)
+	int CarNumber = strlen(input);
+	if (CarNumber == 0)
 	{
 		printf("No input...\n");
 		return 0;
 	}
-        else printf("Total Car Number:%d\n",CarNumber);
+	else printf("Total Car Number:%d\n", CarNumber);
 	//initialize all the mutex and conditional variables
 	pthread_mutex_init(&NorthMutex, NULL);
 	pthread_mutex_init(&SouthMutex, NULL);
@@ -476,10 +471,10 @@ int main()
 	pthread_mutex_init(&FirstSouthMutex, NULL);
 	pthread_mutex_init(&FirstEastMutex, NULL);
 	pthread_mutex_init(&FirstWestMutex, NULL);
-	pthread_cond_init(&FirstNorthCond, NULL);
-	pthread_cond_init(&FirstSouthCond, NULL);
-	pthread_cond_init(&FirstEastCond, NULL);
-	pthread_cond_init(&FirstWestCond, NULL);
+	pthread_cond_init(&FirstNorth, NULL);
+	pthread_cond_init(&FirstSouth, NULL);
+	pthread_cond_init(&FirstEast, NULL);
+	pthread_cond_init(&FirstWest, NULL);
 
 	pthread_mutex_init(&Mutex_a, NULL);
 	pthread_mutex_init(&Mutex_b, NULL);
@@ -497,18 +492,18 @@ int main()
 	pthread_cond_init(&DeadlockOverCond, NULL);
 	//initialize all the queue
 
-        pthread_t Cars[CarNumber];  //store all cars' thread
+	pthread_t Cars[CarNumber];  //store all cars' thread
 	init(&North);
 	init(&South);
 	init(&East);
-	init(&West);	
+	init(&West);
 	int i;
 	int id[MAX + 1];
 	for (i = 1; i<MAX; i++)	id[i] = i;
 	//create thread for each car
-	for (i = 1; i <= CarNumber+1; i++)
+	for (i = 1; i <= CarNumber + 1; i++)
 	{
-		switch (input[i-1])
+		switch (input[i - 1])
 		{
 		case 'n':  //push into North cars , create thread;
 			push(&North, i);
@@ -530,7 +525,7 @@ int main()
 			pthread_create(&Cars[i], NULL, westCar, (void*)(&id[i]));
 			usleep(1);
 			break;
-                case 'N':  //same to 'n'
+		case 'N':  //same to 'n'
 			push(&North, i);
 			pthread_create(&Cars[i], NULL, northCar, (void*)(&id[i]));
 			usleep(1);  //improve coCur
@@ -550,10 +545,10 @@ int main()
 			pthread_create(&Cars[i], NULL, westCar, (void*)(&id[i]));
 			usleep(1);
 			break;
-                default:
-                       if(input[i-1]=='\0') break;
-                       printf("%c is an Invaild direction!\n",input[i-1]);
-                       return 0;
+		default:
+			if (input[i - 1] == '\0') break;
+			printf("%c is an Invaild direction!\n", input[i - 1]);
+			return 0;
 		}
 	}
 
@@ -579,10 +574,10 @@ int main()
 	pthread_mutex_destroy(&FirstSouthMutex);
 	pthread_mutex_destroy(&FirstEastMutex);
 	pthread_mutex_destroy(&FirstWestMutex);
-	pthread_cond_destroy(&FirstNorthCond);
-	pthread_cond_destroy(&FirstSouthCond);
-	pthread_cond_destroy(&FirstEastCond);
-	pthread_cond_destroy(&FirstWestCond);
+	pthread_cond_destroy(&FirstNorth);
+	pthread_cond_destroy(&FirstSouth);
+	pthread_cond_destroy(&FirstEast);
+	pthread_cond_destroy(&FirstWest);
 
 	pthread_mutex_destroy(&Mutex_a);
 	pthread_mutex_destroy(&Mutex_b);
