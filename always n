@@ -345,24 +345,24 @@ void* CarFromW(void* arg)  //same with CarFromN
 int main()
 {
 	char input[MAX];
-	printf("Please input cars:\n");
+	printf("Please input cars:\n"); //getting inputs
 	scanf("%s", input);
 	int CarNumber = strlen(input);
 	if (CarNumber == 0)
 	{
-		printf("No input...\n");
+		printf("No input...\n"); //avoid empty input
 		return 0;
 	}
-	else printf("Total Car Number:%d\n", CarNumber);
+	else printf("Total Car Number:%d\n", CarNumber);  //tell the number
 	//initialize all the mutex and conditional variables
 	pthread_mutex_init(&NorthMutex, NULL);
 	pthread_mutex_init(&SouthMutex, NULL);
 	pthread_mutex_init(&EastMutex, NULL);
 	pthread_mutex_init(&WestMutex, NULL);
 	pthread_cond_init(&NorthCond, NULL);
-	pthread_cond_init(&NorthCond, NULL);
-	pthread_cond_init(&NorthCond, NULL);
-	pthread_cond_init(&NorthCond, NULL);
+	pthread_cond_init(&SouthCond, NULL);
+	pthread_cond_init(&EastCond, NULL);
+	pthread_cond_init(&WestCond, NULL);
 	pthread_mutex_init(&FirstNorthMutex, NULL);
 	pthread_mutex_init(&FirstSouthMutex, NULL);
 	pthread_mutex_init(&FirstEastMutex, NULL);
