@@ -441,14 +441,14 @@ void* southCar(void* arg)  //same with SouthCar
 	pthread_mutex_unlock(&SouthMutex);
 	//try to get the Resources
 	pthread_mutex_lock(&Mutex_SE);  //lock or wait to lock it
-	printf("car %d from N arrives at crossing\n", CarNumber);
+	printf("car %d from S arrives at crossing\n", CarNumber);
 	SouthHasCar = true;
 	//update the number of Resources
 	pthread_mutex_lock(&EmptyMutex);
 	int Remainder = --Resources;  //record the remaind Resources to judge deadlock
 	pthread_mutex_unlock(&EmptyMutex);
 	//entered
-	detectDeadlock(South, Remainder);  //detect the deadlock
+	detectDeadlock(SOUTH, Remainder);  //detect the deadlock
 									   //when existing car crossing in the right, wait for the signal
 	pthread_mutex_lock(&FirstSouthMutex);
 	while (EastHasCar)		pthread_cond_wait(&FirstSouth, &FirstSouthMutex);
