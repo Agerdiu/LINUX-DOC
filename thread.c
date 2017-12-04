@@ -454,12 +454,15 @@ void* westCar(void* arg)  //same with northCar
 int main()
 {
 	char input[MAX];
+        printf("Please input cars:\n");
 	scanf("%s", input);
-	if (strlen(input) == 0)
+        int CarNumber = strlen(input);
+	if (CarNumber==0)
 	{
-		printf("No input...");
+		printf("No input...\n");
 		return 0;
 	}
+        else printf("Total Car Number:%d\n",CarNumber);
 	//initialize all the mutex and conditional variables
 	pthread_mutex_init(&NorthMutex, NULL);
 	pthread_mutex_init(&SouthMutex, NULL);
@@ -501,8 +504,8 @@ int main()
 	init(&East);
 	init(&West);
 
-	int CarNumber = strlen(input);
-	pthread_t Cars[CarNumber + 1];  //store all cars' thread
+	
+	pthread_t Cars[CarNumber];  //store all cars' thread
 
 	int i;
 	int id[MAX + 1];
@@ -512,9 +515,9 @@ int main()
 	}
 
 	//create thread for each car
-	for (i = 0; i <= CarNumber-1; i++)
+	for (i = 1; i <= CarNumber+1; i++)
 	{
-		switch (input[i])
+		switch (input[i-1])
 		{
 		case 'n':  //push into queue and create thread
 			push(&North, i);
@@ -536,6 +539,9 @@ int main()
 			pthread_create(&Cars[i], NULL, westCar, (void*)(&id[i]));
 			usleep(1);
 			break;
+                default:
+                       printf("Invaild direction!\n");
+                       return 0;
 		}
 	}
 
