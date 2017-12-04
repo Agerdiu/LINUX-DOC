@@ -178,7 +178,7 @@ void* CarFromN(void* arg)  //the function north car will run
 	pthread_mutex_unlock(&CurNorthMutex);
 	pthread_mutex_unlock(&NorthMutex);
 	//sleep to wait all cars have been pushed into queue
-	usleep(100);
+	usleep(200);
 	pthread_cond_broadcast(&NorthCond);  
 	return NULL;
 }
@@ -231,7 +231,7 @@ void* CarFromS(void* arg)  //same with CarFromS
 	pthread_mutex_unlock(&CurSouthMutex);
 	pthread_mutex_unlock(&SouthMutex);
 	//sleep to wait all cars have been pushed into queue, then it will get broadcast
-	usleep(100);
+	usleep(200);
 	pthread_cond_broadcast(&SouthCond);  //broadcast to all cars in the queue
 	return NULL;
 }
@@ -284,7 +284,7 @@ void* CarFromE(void* arg)  //same with CarFromE
 	pthread_mutex_unlock(&CurEastMutex);
 	pthread_mutex_unlock(&EastMutex);
 	//sleep to wait all cars have been pushed into queue, then it will get broadcast
-	usleep(100);
+	usleep(200);
 	pthread_cond_broadcast(&EastCond);  //broadcast to all cars in the queue
 	return NULL;
 }
@@ -337,7 +337,7 @@ void* CarFromW(void* arg)  //same with CarFromN
 	pthread_mutex_unlock(&CurWestMutex);
 	pthread_mutex_unlock(&WestMutex);
 	//sleep to wait all cars have been pushed into queue, then it will get broadcast
-	usleep(100);
+	usleep(200);
 	pthread_cond_broadcast(&WestCond);  //broadcast to all cars in the queue
 	return NULL;
 }
