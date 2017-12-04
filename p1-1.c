@@ -96,9 +96,9 @@ void CrossOpen()  //active the whole program
 	}
 }
 
-void DeadlockDealing(dir Dir, int Remainder)  //detect the deadlock
+void DeadlockDealing(dir Dir)  //detect the deadlock
 {
-	if (Remainder != 0) return;  //if a b c and d aren't used up, it must be not deadlock
+	if (Resource != 0) return;  //if a b c and d aren't used up, it must be not deadlock
 	pthread_mutex_t* Road;
 	pthread_cond_t* First;
 	switch (Dir)  //record who detect the deadlock and the left car
@@ -185,7 +185,7 @@ void* CarFromN(void* arg)  //the function north car will run
 	Resources--;  //record the remaind Resources to judge deadlock
 	pthread_mutex_unlock(&EmptyMutex);
 	//entered
-	DeadlockDealing(N_D, Resources);  //detect the deadlock
+	DeadlockDealing(N_D);  //detect the deadlock
 									   //when existing car crossing in the right, wait for the signal
 	pthread_mutex_lock(&FirstNorthMutex);
 	while (WestHasCar)		pthread_cond_wait(&FirstNorth, &FirstNorthMutex);
@@ -237,7 +237,7 @@ void* CarFromS(void* arg)  //same with CarFromS
 	Resources--;  //record the remaind Resources to judge deadlock
 	pthread_mutex_unlock(&EmptyMutex);
 	//entered
-	DeadlockDealing(S_D, Resources);  //detect the deadlock
+	DeadlockDealing(S_D);  //detect the deadlock
 									   //when existing car crossing in the right, wait for the signal
 	pthread_mutex_lock(&FirstSouthMutex);
 	while (EastHasCar)		pthread_cond_wait(&FirstSouth, &FirstSouthMutex);
@@ -289,7 +289,7 @@ void* CarFromE(void* arg)  //same with CarFromE
 	Resources--;  //record the remaind Resources to judge deadlock
 	pthread_mutex_unlock(&EmptyMutex);
 	//entered
-	DeadlockDealing(E_D, Resources);  //detect the deadlock
+	DeadlockDealing(E_D);  //detect the deadlock
 									   //when existing car crossing in the right, wait for the signal
 	pthread_mutex_lock(&FirstEastMutex);
 	while (NorthHasCar)		pthread_cond_wait(&FirstEast, &FirstEastMutex);
@@ -341,7 +341,7 @@ void* CarFromW(void* arg)  //same with CarFromN
 	Resources--;  //record the remaind Resources to judge deadlock
 	pthread_mutex_unlock(&EmptyMutex);
 	//entered
-	DeadlockDealing(W_D, Resources);  //detect the deadlock
+	DeadlockDealing(W_D);  //detect the deadlock
 									  //when existing car crossing in the right, wait for the signal
 	pthread_mutex_lock(&FirstWestMutex);
 	while (SouthHasCar)		pthread_cond_wait(&FirstWest, &FirstWestMutex);
