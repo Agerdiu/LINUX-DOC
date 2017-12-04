@@ -75,7 +75,7 @@ pthread_mutex_t DeadlockOverMutex;
 pthread_cond_t DeadlockOverCond;
 
 
-void initCar()  //active the whole program
+void CrossOpen()  //active the whole program
 {
 	if (!is_empty(&North))  //if north has car, pop a car from queue
 	{
@@ -495,57 +495,69 @@ int main()
 
 	pthread_mutex_init(&DeadlockOverMutex, NULL);
 	pthread_cond_init(&DeadlockOverCond, NULL);
-
-
 	//initialize all the queue
+
+        pthread_t Cars[CarNumber];  //store all cars' thread
 	init(&North);
 	init(&South);
 	init(&East);
-	init(&West);
-
-	
-	pthread_t Cars[CarNumber];  //store all cars' thread
-
+	init(&West);	
 	int i;
 	int id[MAX + 1];
-	for (i = 1; i<MAX; i++)
-	{
-		id[i] = i;
-	}
-
+	for (i = 1; i<MAX; i++)	id[i] = i;
 	//create thread for each car
 	for (i = 1; i <= CarNumber+1; i++)
 	{
 		switch (input[i-1])
 		{
-		case 'n':  //push into queue and create thread
+		case 'n':  //push into North cars , create thread;
 			push(&North, i);
 			pthread_create(&Cars[i], NULL, northCar, (void*)(&id[i]));
 			usleep(1);  //improve coCur
 			break;
-		case 's':  //same with 'n'
+		case 's':  //push into South cars , create thread;
 			push(&South, i);
 			pthread_create(&Cars[i], NULL, southCar, (void*)(&id[i]));
 			usleep(1);
 			break;
-		case 'e':  //same with 'n'
+		case 'e':  //push into East cars , create thread;
 			push(&East, i);
 			pthread_create(&Cars[i], NULL, eastCar, (void*)(&id[i]));
 			usleep(1);
 			break;
-		case 'w':  //same with 'n'
+		case 'w':  //push into West cars , create thread;
+			push(&West, i);
+			pthread_create(&Cars[i], NULL, westCar, (void*)(&id[i]));
+			usleep(1);
+			break;
+                case 'N':  //same to 'n'
+			push(&North, i);
+			pthread_create(&Cars[i], NULL, northCar, (void*)(&id[i]));
+			usleep(1);  //improve coCur
+			break;
+		case 'S':  //same to 's'
+			push(&South, i);
+			pthread_create(&Cars[i], NULL, southCar, (void*)(&id[i]));
+			usleep(1);
+			break;
+		case 'E':  //same to 'e'
+			push(&East, i);
+			pthread_create(&Cars[i], NULL, eastCar, (void*)(&id[i]));
+			usleep(1);
+			break;
+		case 'W':  //same to 'w'
 			push(&West, i);
 			pthread_create(&Cars[i], NULL, westCar, (void*)(&id[i]));
 			usleep(1);
 			break;
                 default:
-                       printf("Invaild direction!\n");
+                       if(input[i-1]=='\0') break;
+                       printf("%c is an Invaild direction!\n",input[i-1]);
                        return 0;
 		}
 	}
 
-
-	initCar();  //let's go!
+	CrossOpen();  //enable the crossroad system
 
 	for (i = 1; i <= CarNumber; i++)  //join all cars' thread
 	{
