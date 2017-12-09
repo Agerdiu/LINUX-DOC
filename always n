@@ -142,6 +142,7 @@ void* CarFromN(void* arg)  //the function north car will run
 	printf("car %d from N arrives at crossing\n", CarID);
 	NorthHasCar = true;
 	//update the number of Resources
+	usleep(50);
 	pthread_mutex_lock(&ResourcesMutex);
 	Resources--;  //record the Resources to judge deadlock
 	pthread_mutex_unlock(&ResourcesMutex);
@@ -192,6 +193,7 @@ void* CarFromS(void* arg)  //same with CarFromS
 	pthread_mutex_lock(&Mutex_SE);  //lock or wait to lock it
 	printf("car %d from S arrives at crossing\n", CarID);
 	SouthHasCar = true;
+	usleep(50);
 	//update the number of Resources
 	pthread_mutex_lock(&ResourcesMutex);
 	Resources--;  //record the remaind Resources to judge deadlock
@@ -244,6 +246,7 @@ void* CarFromE(void* arg)  //same with CarFromE
 	printf("car %d from E arrives at crossing\n", CarID);
 	EastHasCar = true;
 	//update the number of Resources
+	usleep(50);
 	pthread_mutex_lock(&ResourcesMutex);
 	Resources--;  //record the remaind Resources to judge deadlock
 	pthread_mutex_unlock(&ResourcesMutex);
@@ -295,6 +298,7 @@ void* CarFromW(void* arg)  //same with CarFromN
 	printf("car %d from W arrives at crossing\n", CarID);
 	WestHasCar = true;
 	//update the number of Resources
+	usleep(50);
 	pthread_mutex_lock(&ResourcesMutex);
 	Resources--;  //record the remaind Resources to judge deadlock
 	pthread_mutex_unlock(&ResourcesMutex);
