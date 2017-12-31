@@ -21,3 +21,10 @@ asmlinkage int sys_mysyscall(void)
     
     return 0;
 }
+#include <linux/unistd.h>
+#include <sys/syscall.h>
+#define count 400
+int main()
+{
+ syscall(count);
+}
