@@ -6,7 +6,7 @@ asmlinkage int sys_mysyscall(void)
     
     printk(KERN_INFO "Mysyscall:");
     do{
-        printk(KERN_INFO "pid: %d\tprocess name: %s\tpage faults: %d\tdirty pages: %d\n",tsk->pid,tsk->comm,tsk->pf,tsk->nr_dirtied);
+        printk(KERN_INFO "Process name: %s   Page faults: %d   Dirty pages: %d\n",tsk->comm,tsk->pf,tsk->nr_dirtied);
         system_pf += tsk->pf;
         system_dp += tsk->nr_dirtied;
         tsk = next_task(tsk);
@@ -14,8 +14,8 @@ asmlinkage int sys_mysyscall(void)
     while( tsk != &init_task );
 
     printk(KERN_INFO "---------------------------------------------\n");
-    printk(KERN_INFO "System page faults: %d\n",system_pf);
-    printk(KERN_INFO "System dirty pages: %d\n",system_dp);
+    printk(KERN_INFO "Total page faults: %d\n",system_pf);
+    printk(KERN_INFO "Total dirty pages: %d\n",system_dp);
     printk(KERN_INFO "Current page faults: %d\n",current->pf);
     printk(KERN_INFO "Current dirty pages: %d\n",current->nr_dirtied);
     
