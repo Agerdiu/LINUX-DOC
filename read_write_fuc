@@ -1,0 +1,29 @@
+对new_sync_ write _cryp函数，可以做如下修改：
+ssize_t new_sync_write_crypt(struct file *filp, const char __user *buf, size_t len, loff_t *ppos)
+{
+		char* mybuf = buf;
+        char* tmp = (char*)kmalloc(sizeof(char)*len,GFP_KENERL);
+        copy_from_user(tmp,buf,len);
+        
+        for(i=0;i<len;i++)
+{
+tmp[i] = (tmp[i]+25)%128;
+}
+printk("haha encrypt %ld\n", len);
+		return new_sync_write(filp, tmp, len, ppos);//调用默认的写函数，把加密数据写入
+}
+对new_sync_read_cryp函数，可以做如下修改：
+ssize_t new_sync_read_crypt(struct file *filp, char __user *buf, size_t len, loff_t *ppos)
+{
+        int i;
+		char* tmp = (char*)kmalloc(sizeof(char)*len,GFP_KENERL);
+        ssize_t ret = new_sync_read(filp, buf, len, ppos);
+		//此处添加对文件的解密（简单移位解密，将每个字符值-25）
+		for(i=0;i<len;i++)
+{
+tmp[i] = (tmp[i]+103)%128;
+}
+        copy_to_user(buf,tmp,len);
+        printk("haha encrypt %ld\n", len);
+        return ret;
+}
